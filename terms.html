@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>服務與隱私權條款</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4A4A4A; line-height: 1.6; }
+    .container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 80px;}
+    h1 { font-size: 20px; color: #6d5c4f; text-align: center; border-bottom: 2px solid #E6C9B3; padding-bottom: 10px;}
+    h2 { font-size: 16px; color: #6d5c4f; margin-top: 20px; }
+    p, li { font-size: 14px; color: #666; }
+    ul { padding-left: 20px; }
+    
+    /* 浮動在最底部的按鈕區塊 */
+    .footer-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); box-sizing: border-box; text-align: center;}
+    
+    .agree-btn { 
+      background-color: #E6C9B3; color: #6d5c4f; border: none; padding: 15px; width: 100%; 
+      border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .agree-btn:active { background-color: #d4b59d; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>壓力求服務規範</h1>
+    
+    <h2>◎ 服務條款</h2>
+    <ol>
+      <li><strong>服務說明：</strong>壓力求是一項透過自動化互動技術提供情緒抒發與壓力引導的服務。本服務不提供診斷、治療或任何醫療性質的建議。</li>
+      <li><strong>使用者資格：</strong>使用者須具備完全行為能力。若您為未成年人，應經法定代理人閱讀並同意本條款後方得使用。</li>
+      <li><strong>行為規範：</strong>使用者不得利用本服務進行誹謗、公然侮辱、傳遞違法資訊或意圖干擾系統運作之行為。本團隊保留終止違規使用者服務之權利。</li>
+      <li><strong>責任限制：</strong>本團隊盡力確保系統穩定，但對於因不可抗力（如系統維護、第三方平台故障、網路連線問題）導致之服務中斷或資料遺失，不負賠償責任。</li>
+    </ol>
+
+    <h2>◎ 隱私權政策</h2>
+    <ol>
+      <li><strong>資料收集範圍：</strong>
+        <ul>
+          <li>基礎識別：您的 Line 內部唯一識別碼（UID）、頭像與暱稱。</li>
+          <li>互動資料：您在對話中選擇的按鈕、輸入的文字、情緒標籤及使用頻率。</li>
+        </ul>
+      </li>
+      <li><strong>資料使用目的：</strong>
+        <ul>
+          <li>服務優化：根據您的互動回饋，改進機器人的對話邏輯。</li>
+          <li>個人化體驗：紀錄您的壓力歷程，以便提供適當的歷史回顧或建議。</li>
+          <li>學術或統計分析：資料將以「去識別化」（意即無法連結到您個人身分）的形式，進行整體壓力趨勢分析。</li>
+        </ul>
+      </li>
+      <li><strong>資料安全與保存：</strong>
+        <ul>
+          <li>所有對話紀錄皆存儲於受保護的雲端資料庫，並採加密傳輸。</li>
+          <li>本團隊絕不會將您的個人識別資料與對話內容出售或提供給第三方。</li>
+          <li>使用者權利：您可以隨時透過信箱聯繫要求查閱、更正或請求刪除您的個人資料與對話紀錄。<br>聯繫信箱：s111317024@stu.ntue.edu.tw</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h2>◎ 免責聲明</h2>
+    <ol>
+      <li><strong>非緊急救助：</strong>壓力求並非危機處理機構。若您有自傷或傷人之意圖，本程式無法提供即時攔截或救援。</li>
+      <li><strong>專業建議限制：</strong>程式生成之回覆內容僅供參考，不代表醫療診斷。使用者依據本服務內容所做之任何決定，需自行承擔風險。</li>
+      <li><strong>第三方平台：</strong>本服務架設於 Line 平台，使用者亦須遵守 Line 公司的服務條款與隱私政策。</li>
+    </ol>
+  </div>
+
+  <div class="footer-bar">
+    <button id="agreeBtn" class="agree-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      我同意並開始使用
+    </button>
+  </div>
+
+  <script>
+    // ⚠️ 這裡要換成你為「條款網頁」申請的 LIFF ID
+    const LIFF_ID = "2010092951-JkDSRiYY"; 
+
+    async function main() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+      } catch (err) {
+        console.error("LIFF 初始化失敗", err);
+      }
+    }
+
+    document.getElementById('agreeBtn').addEventListener('click', async () => {
+      if (!liff.isLoggedIn()) {
+        alert("請在 LINE 裡面開啟此頁面喔！");
+        return;
+      }
+      try {
+        // 1. 在背景自動幫使用者傳送這句話給機器人
+        await liff.sendMessages([
+          { type: "text", text: "我已同意服務與隱私權條款" }
+        ]);
+        // 2. 自動關閉網頁，退回聊天室！
+        liff.closeWindow();
+      } catch (err) {
+        alert("發送失敗，請確認網路連線：" + err);
+      }
+    });
+
+    main();
+  </script>
+</body>
+</html>
