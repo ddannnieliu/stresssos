@@ -3,71 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>心情紀錄儀</title>
+  <title>心情日記</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4a4a4a; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .header h1 { font-size: 22px; color: #6d5c4f; margin: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4a4a4a; margin: 0; }
+    .header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
+    .header h1 { font-size: 22px; color: #6d5c4f; margin: 0; letter-spacing: 1px; }
     .header p { font-size: 14px; color: #8c8c8c; margin-top: 5px; }
     
     .card { 
-      background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 5px solid #E6C9B3;
+      background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-left: 4px solid #E6C9B3;
     }
     .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .date { font-size: 13px; color: #aaaaaa; font-weight: bold; }
     .mood-tag { 
-      background-color: #F4EBE1; color: #6d5c4f; padding: 4px 12px; 
-      border-radius: 20px; font-size: 14px; font-weight: bold; 
+      background-color: #F4EBE1; color: #6d5c4f; padding: 4px 10px; 
+      border-radius: 12px; font-size: 13px; font-weight: bold; 
     }
-    .diary-content { font-size: 15px; color: #666; line-height: 1.4; word-break: break-all; }
-    .no-diary { font-style: italic; color: #ccc; }
+    .diary-content { font-size: 14px; color: #666; line-height: 1.5; word-break: break-word; }
+    .no-diary { font-style: italic; color: #cccccc; font-size: 13px; }
     
-    #status { text-align: center; margin-top: 100px; color: #8c8c8c; }
+    #status { text-align: center; margin-top: 50px; font-size: 15px; color: #8c8c8c; padding: 20px; word-break: break-all; }
+    .error-text { color: #d9534f !important; font-weight: bold; }
   </script>
 </head>
 <body>
   
-  <div id="status">正在同步紀錄...</div>
+  <div id="status">啟動中，請稍候...⏳</div>
   
   <div id="main-content" style="display:none;">
     <div class="header">
       <h1>心情日記</h1>
-      <p>回顧最近七天的情緒起伏</p>
+      <p>回顧最近的情緒起伏</p>
     </div>
     <div id="app"></div>
   </div>
 
   <script>
+    // 【終極防白屏機制】：攔截所有隱藏錯誤並顯示在畫面上
+    window.onerror = function(message, source, lineno, colno, error) {
+      document.getElementById("status").innerHTML = `<span class="error-text">❌ 語法錯誤：<br>${message}<br>行數: ${lineno}</span>`;
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      document.getElementById("status").innerHTML = `<span class="error-text">❌ 執行錯誤：<br>${event.reason}</span>`;
+    });
+
+    // ==========================================
+    // ⚠️ 必填設定區 (非常重要！)
+    // ==========================================
+    
+    // 1. 填寫你的「心情日記 LIFF ID」 (記得保留雙引號！)
     const LIFF_ID = "2010092951-xlisrv8p"; 
+    
+    // 2. 填寫你的 GAS 網頁應用程式網址 (結尾要是 /exec)
+    // 💡 注意：因為我們已經把網頁移到 GitHub Pages，所以這裡【絕對不能】寫 <?= gasUrl ?>，一定要貼上真實的網址！
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzTARBcKDYLsgk5KN-NMXSYRnTy7o_7JFuymFFy78a6xt_lpzJSz2WnR9ydwCnLX4y8/exec"; 
+
+    // ==========================================
 
     async function main() {
       try {
+        document.getElementById("status").innerText = "正在連線至 LINE...";
         await liff.init({ liffId: LIFF_ID });
+        
         if (liff.isLoggedIn()) {
           const context = liff.getContext();
+          document.getElementById("status").innerText = "正在同步您的紀錄...";
           fetchData(context.userId);
         } else {
-          document.getElementById("status").innerText = "請在 LINE App 中開啟";
+          document.getElementById("status").innerText = "請在 LINE App 中開啟此頁面。";
         }
       } catch (err) {
-        document.getElementById("status").innerText = "啟動失敗";
+        document.getElementById("status").innerHTML = `<span class="error-text">❌ LIFF 初始化失敗：<br>${err.message}</span>`;
       }
     }
 
     async function fetchData(userId) {
       try {
         const res = await fetch(GAS_URL + "?action=getMoodData&userId=" + userId);
+        if (!res.ok) throw new Error("伺服器沒有正常回應 (狀態碼: " + res.status + ")");
+        
         const data = await res.json();
         
         document.getElementById("status").style.display = "none";
         document.getElementById("main-content").style.display = "block";
         
         const appDiv = document.getElementById("app");
-        if (data.length === 0) {
-          appDiv.innerHTML = "<p style='text-align:center; color:#ccc; margin-top:50px;'>尚無任何紀錄</p>";
+        if (!data || data.length === 0) {
+          appDiv.innerHTML = "<p style='text-align:center; color:#ccc; margin-top:50px;'>尚無任何紀錄，今晚記得來打卡喔！</p>";
           return;
         }
 
@@ -75,7 +99,7 @@
           const card = document.createElement("div");
           card.className = "card";
           
-          const diaryHtml = item.diary 
+          const diaryHtml = (item.diary && item.diary.trim() !== "") 
             ? `<div class="diary-content">${item.diary}</div>` 
             : `<div class="diary-content no-diary">這天沒有留下備註</div>`;
 
@@ -89,7 +113,7 @@
           appDiv.appendChild(card);
         });
       } catch (err) {
-        document.getElementById("status").innerText = "讀取失敗";
+        document.getElementById("status").innerHTML = `<span class="error-text">❌ 讀取資料失敗：<br>請檢查 GAS 網址是否正確且權限為「所有人」。<br>錯誤詳情: ${err.message}</span>`;
       }
     }
 
