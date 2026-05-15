@@ -3,75 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>我的心情日記</title>
+  <title>心情紀錄儀</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F4EBE1; color: #6d5c4f; }
-    .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;}
-    .date-text { font-size: 14px; color: #8c8c8c; }
-    .mood-text { font-size: 18px; font-weight: bold; }
-    h2 { text-align: center; font-size: 22px; margin-bottom: 25px; }
-    #status { font-size: 16px; text-align: center; color: #8c8c8c; margin-top: 50px; }
-  </style>
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4a4a4a; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { font-size: 22px; color: #6d5c4f; margin: 0; }
+    .header p { font-size: 14px; color: #8c8c8c; margin-top: 5px; }
+    
+    .card { 
+      background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 5px solid #E6C9B3;
+    }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .date { font-size: 13px; color: #aaaaaa; font-weight: bold; }
+    .mood-tag { 
+      background-color: #F4EBE1; color: #6d5c4f; padding: 4px 12px; 
+      border-radius: 20px; font-size: 14px; font-weight: bold; 
+    }
+    .diary-content { font-size: 15px; color: #666; line-height: 1.4; word-break: break-all; }
+    .no-diary { font-style: italic; color: #ccc; }
+    
+    #status { text-align: center; margin-top: 100px; color: #8c8c8c; }
+  </script>
 </head>
 <body>
   
-  <h2 id="header-title" style="display:none;">📖 最近的心情紀錄</h2>
-  <div id="status">啟動中...⏳</div>
-  <div id="app"></div>
+  <div id="status">正在同步紀錄...</div>
+  
+  <div id="main-content" style="display:none;">
+    <div class="header">
+      <h1>心情日記</h1>
+      <p>回顧最近七天的情緒起伏</p>
+    </div>
+    <div id="app"></div>
+  </div>
 
   <script>
-    // ⚠️ 1. 填寫你的 LIFF ID
     const LIFF_ID = "2010092951-xlisrv8p"; 
-    
-    // ⚠️ 2. 填寫你的 GAS 網頁應用程式網址 (結尾要是 /exec)
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzTARBcKDYLsgk5KN-NMXSYRnTy7o_7JFuymFFy78a6xt_lpzJSz2WnR9ydwCnLX4y8/exec"; 
-
-    const statusDiv = document.getElementById("status");
 
     async function main() {
       try {
         await liff.init({ liffId: LIFF_ID });
-        
         if (liff.isLoggedIn()) {
           const context = liff.getContext();
           fetchData(context.userId);
         } else {
-          statusDiv.innerText = "請在 LINE App 裡面開啟喔！";
+          document.getElementById("status").innerText = "請在 LINE App 中開啟";
         }
       } catch (err) {
-        statusDiv.innerText = "❌ LIFF 啟動失敗：" + err.message;
+        document.getElementById("status").innerText = "啟動失敗";
       }
     }
 
     async function fetchData(userId) {
       try {
-        statusDiv.innerText = "正在讀取心情資料...";
-        // 前端直接向 GAS 發送跨域請求 (CORS)，GAS 的 ContentService 會自動放行
         const res = await fetch(GAS_URL + "?action=getMoodData&userId=" + userId);
         const data = await res.json();
         
-        statusDiv.style.display = "none"; 
-        const appDiv = document.getElementById("app");
-        appDiv.innerHTML = ""; 
+        document.getElementById("status").style.display = "none";
+        document.getElementById("main-content").style.display = "block";
         
+        const appDiv = document.getElementById("app");
         if (data.length === 0) {
-          statusDiv.style.display = "block";
-          statusDiv.innerText = "目前還沒有紀錄喔！今晚記得來打卡～";
+          appDiv.innerHTML = "<p style='text-align:center; color:#ccc; margin-top:50px;'>尚無任何紀錄</p>";
           return;
         }
 
-        document.getElementById("header-title").style.display = "block";
         data.forEach(item => {
           const card = document.createElement("div");
           card.className = "card";
-          card.innerHTML = `<span class="date-text">${item.date}</span> <span class="mood-text">${item.mood}</span>`;
+          
+          const diaryHtml = item.diary 
+            ? `<div class="diary-content">${item.diary}</div>` 
+            : `<div class="diary-content no-diary">這天沒有留下備註</div>`;
+
+          card.innerHTML = `
+            <div class="card-top">
+              <span class="date">${item.date}</span>
+              <span class="mood-tag">${item.mood}</span>
+            </div>
+            ${diaryHtml}
+          `;
           appDiv.appendChild(card);
         });
-
       } catch (err) {
-        statusDiv.style.display = "block";
-        statusDiv.innerText = "❌ 資料連線錯誤，請確認 GAS 網址是否正確。";
+        document.getElementById("status").innerText = "讀取失敗";
       }
     }
 
