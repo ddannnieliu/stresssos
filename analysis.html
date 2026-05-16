@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,23 +9,22 @@
     body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4A4A4A; margin: 0; }
     .container { max-width: 500px; margin: auto; padding-bottom: 100px; }
     .header { text-align: center; margin: 30px 0; }
-    .header h1 { font-size: 20px; color: #6D5C4F; margin: 0; }
-    .progress-bar { width: 100%; height: 4px; background: #EEE; border-radius: 2px; margin: 20px 0; position: relative; }
-    .progress-inner { height: 100%; background: #E6C9B3; border-radius: 2px; transition: width 0.3s; }
+    .header h1 { font-size: 20px; color: #6D5C4F; margin: 0; font-weight: bold; }
+    .progress-bar { width: 100%; height: 6px; background: #EEE; border-radius: 3px; margin: 25px 0; position: relative; }
+    .progress-inner { height: 100%; background: #E6C9B3; border-radius: 3px; transition: width 0.3s; }
     
     .step-content { display: none; }
     .step-active { display: block; }
     
-    .question { font-size: 18px; margin-bottom: 25px; text-align: center; line-height: 1.6; color: #6D5C4F; }
+    .question { font-size: 18px; margin-bottom: 30px; text-align: center; line-height: 1.6; color: #6D5C4F; }
     .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .option-btn { 
       background: white; border: 1px solid #EEE; padding: 20px 10px; border-radius: 12px; 
-      text-align: center; font-size: 15px; cursor: pointer; transition: all 0.2s;
+      text-align: center; font-size: 15px; cursor: pointer; transition: all 0.2s; color: #666;
     }
-    .option-btn:active { background: #F4EBE1; border-color: #E6C9B3; }
-    .option-btn.selected { background: #E6C9B3; color: white; border-color: #E6C9B3; }
+    .option-btn.selected { background: #E6C9B3; color: white; border-color: #E6C9B3; font-weight: bold; }
 
-    .footer { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); display: flex; gap: 10px; box-sizing: border-box; }
+    .footer { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); display: flex; gap: 12px; box-sizing: border-box; }
     .btn { flex: 1; padding: 15px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; }
     .btn-prev { background: #EEE; color: #888; }
     .btn-next { background: #E6C9B3; color: #6D5C4F; }
@@ -34,12 +33,12 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1 id="step-title">Step 1: 情緒辨識</h1>
+      <h1 id="step-title">步驟 1: 情緒辨識</h1>
       <div class="progress-bar"><div class="progress-inner" id="progress" style="width: 25%;"></div></div>
     </div>
 
     <div class="step-content step-active" id="step1">
-      <div class="question">您現在的心情感覺比較像是？</div>
+      <div class="question">您現在的感覺比較像是哪一種？</div>
       <div class="options" id="opt-step1">
         <div class="option-btn" data-val="心情不好">心情不好</div>
         <div class="option-btn" data-val="心累想躺平">心累想躺平</div>
@@ -51,7 +50,7 @@
     </div>
 
     <div class="step-content" id="step2">
-      <div class="question">這份感覺的主要來源是？</div>
+      <div class="question">這份重量的主要來源是？</div>
       <div class="options" id="opt-step2">
         <div class="option-btn" data-val="金錢問題">金錢問題</div>
         <div class="option-btn" data-val="課業壓力">課業壓力</div>
@@ -63,9 +62,9 @@
     </div>
 
     <div class="step-content" id="step3">
-      <div class="question">目前更具體的狀態描述是？</div>
+      <div class="question">目前的心理狀態更接近？</div>
       <div class="options" id="opt-step3">
-        <div class="option-btn" data-val="腦中一直想停不下來">一直想停不下來</div>
+        <div class="option-btn" data-val="一直想停不下來">一直想停不下來</div>
         <div class="option-btn" data-val="很累但不能休息">很累但不能休息</div>
         <div class="option-btn" data-val="覺得自己不夠好">覺得自己不夠好</div>
         <div class="option-btn" data-val="對未來感到不安">對未來感到不安</div>
@@ -75,7 +74,7 @@
     </div>
 
     <div class="step-content" id="step4">
-      <div class="question">此刻您最需要的是什麼？</div>
+      <div class="question">此刻您最需要的是什麼呢？</div>
       <div class="options" id="opt-step4">
         <div class="option-btn" data-val="有人聽我訴說">有人聽我訴說</div>
         <div class="option-btn" data-val="幫我釐清現況">幫我釐清現況</div>
@@ -95,14 +94,18 @@
   <script>
     let currentStep = 1;
     const selections = { step1: '', step2: '', step3: '', step4: '' };
-    const LIFF_ID = "您的_壓力引導_LIFF_ID";
+    
+    // ⚠️ 請在這裡換上您為這個分析網頁申請的 LIFF ID
+    const LIFF_ID = "2010092951-eighli12"; 
 
     async function init() {
-      await liff.init({ liffId: LIFF_ID });
+      try {
+        await liff.init({ liffId: LIFF_ID });
+      } catch (e) { console.error("LIFF 初始化失敗"); }
     }
     init();
 
-    // 處理選項點擊
+    // 處理選項點擊效果
     document.querySelectorAll('.option-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const stepId = this.parentElement.id.replace('opt-', '');
@@ -112,7 +115,7 @@
       });
     });
 
-    const stepTitles = ["", "Step 1: 情緒辨識", "Step 2: 來源定位", "Step 3: 狀態梳理", "Step 4: 需求定義"];
+    const stepTitles = ["", "步驟 1: 情緒辨識", "步驟 2: 來源定位", "步驟 3: 狀態梳理", "步驟 4: 需求定義"];
 
     document.getElementById('nextBtn').addEventListener('click', async () => {
       if (!selections[`step${currentStep}`]) { alert("請先選擇一個選項喔。"); return; }
@@ -126,14 +129,14 @@
         document.getElementById('prevBtn').style.display = 'block';
         if (currentStep === 4) document.getElementById('nextBtn').innerText = '查看建議';
       } else {
-        // 完成，發送訊息回 LINE
+        // 完成梳理，將結果傳回 LINE 聊天室
         try {
           await liff.sendMessages([{
             type: 'text',
-            text: `我已完成梳理分析：${selections.step1}, ${selections.step2}, ${selections.step3}, ${selections.step4}`
+            text: `分析紀錄：${selections.step1}, ${selections.step2}, ${selections.step3}, ${selections.step4}`
           }]);
           liff.closeWindow();
-        } catch (e) { alert("傳送失敗，請確認在 LINE 中開啟。"); }
+        } catch (e) { alert("傳送失敗，請確保您是在 LINE App 中開啟此畫面。"); }
       }
     });
 
@@ -149,64 +152,3 @@
   </script>
 </body>
 </html>
-
----
-
-### 2. 後端：感性 AI 邏輯 (`Code.gs`)
-我已經把處理邏輯改為接收「分析字串」，並大幅調整了 AI 的 Prompt 語氣，使其更加溫暖且富含同理心。
-
-```javascript
-// ⚠️ 更新後的關鍵邏輯片段
-
-function handleTextEvent(userId, text, replyToken) {
-  let user = getUserData(userId);
-
-  // 1. 攔截來自 LIFF 的深度梳理結果
-  if (text.startsWith("我已完成梳理分析：")) {
-    const data = text.replace("我已完成梳理分析：", "").split(", ");
-    const [emotion, source, state, need] = data;
-
-    // 先回覆溫暖的過渡
-    sendLineReply(replyToken, "謝謝你願意試著把這些感覺梳理出來，這其實很不容易喔。我正在幫你把剛才的對話整理一下，請給我幾秒鐘的時間陪伴你... 🦊");
-
-    // 呼叫感性 AI 分析
-    Utilities.sleep(2000); 
-    const prompt = `你是一位專業且感性的心理諮商師『壓力求』。
-      使用者完成了一次梳理。結果：目前覺得「${emotion}」，主要源於「${source}」，狀態是「${state}」，此刻最希望能「${need}」。
-      【重要規範】
-      1. 嚴禁 Emoji。
-      2. 請先用高度同理心的語氣「接住」對方的疲倦，肯定他們的努力。
-      3. 給予一個極簡、溫柔的行動建議。
-      4. 像真正的心理師在說話，不要太理性、不要列點。字數不超過120字。`;
-    
-    sendLinePush(userId, callGemini(prompt));
-    return;
-  }
-
-  // 2. 更新關鍵字觸發 (圖文選單設定)
-  if (text === "開始壓力引導") {
-    // 這裡直接發送一個帶有 LIFF 連結的按鈕卡片
-    const flex = {
-      "type": "bubble", "body": { "type": "box", "layout": "vertical", "contents": [
-        { "type": "text", "text": "陪我找出口", "weight": "bold", "size": "xl", "color": "#6d5c4f" },
-        { "type": "text", "text": "透過四個簡單的步驟，讓我試著接住您的情緒並給予陪伴。", "wrap": true, "margin": "md", "color": "#8c8c8c", "size": "sm" }
-      ]},
-      "footer": { "type": "box", "layout": "vertical", "contents": [
-        { "type": "button", "style": "primary", "color": "#E6C9B3", "action": { "type": "uri", "label": "開始引導", "uri": "您的_分析LIFF_URL" } }
-      ]}
-    };
-    sendFlexReply(replyToken, "壓力引導入口", flex);
-    return;
-  }
-  
-  // 其餘對話邏輯...
-}
-
-### 3. 圖文選單建議
-你可以去 LINE 後台，把圖文選單精簡為四格：
-1. **左上：開始壓力引導** (關鍵字：`開始壓力引導`)
-2. **右上：心情日記** (關鍵字：`我的心情日記`)
-3. **左下：心情打卡** (關鍵字：`心情打卡`)
-4. **右下：怎麼使用** (關鍵字：`怎麼使用`)
-
-這套方案結合了 LIFF 的流暢度與心理諮商師的感性語氣，相信能讓使用者在使用時感到更加平靜且被療癒。Feel free to take a look and let me know if you'd like to make any edits.
