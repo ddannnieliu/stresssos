@@ -9,13 +9,20 @@
   <style>
     body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4A4A4A; margin: 0; }
     .container { max-width: 500px; margin: auto; padding-bottom: 100px; }
-    .header { text-align: center; margin: 30px 0; }
+    
+    /* --- 升級版：質感圓點進度條 --- */
+    .stepper-wrapper { display: flex; justify-content: space-between; margin-bottom: 30px; position: relative; padding: 0 10px; }
+    .stepper-wrapper::before { content: ""; position: absolute; top: 15px; left: 20px; right: 20px; height: 3px; background: #EEE; z-index: 0; }
+    .step-indicator { display: flex; flex-direction: column; align-items: center; z-index: 1; position: relative; }
+    .step-circle { width: 32px; height: 32px; background: #EEE; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #888; transition: all 0.4s ease; border: 3px solid #F9F6F0; }
+    .step-active .step-circle { background: #E6C9B3; color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(230, 201, 179, 0.5); }
+    .step-completed .step-circle { background: #D4B59D; color: white; }
+    
+    .header { text-align: center; margin-bottom: 20px; }
     .header h1 { font-size: 20px; color: #6D5C4F; margin: 0; font-weight: bold; }
-    .progress-bar { width: 100%; height: 6px; background: #EEE; border-radius: 3px; margin: 25px 0; position: relative; }
-    .progress-inner { height: 100%; background: #E6C9B3; border-radius: 3px; transition: width 0.3s; }
     
     .step-content { display: none; }
-    .step-active { display: block; animation: fadeIn 0.4s; }
+    .step-show { display: block; animation: fadeIn 0.4s; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
     .question { font-size: 18px; margin-bottom: 30px; text-align: center; line-height: 1.6; color: #6D5C4F; }
@@ -52,12 +59,18 @@
   </div>
 
   <div class="container" id="app-container" style="display: none;">
-    <div class="header">
-      <h1 id="step-title">步驟 1: 情緒辨識</h1>
-      <div class="progress-bar"><div class="progress-inner" id="progress" style="width: 20%;"></div></div>
+    
+    <div class="stepper-wrapper" id="stepper">
+      <div class="step-indicator step-active" id="ind-1"><div class="step-circle">1</div></div>
+      <div class="step-indicator" id="ind-2"><div class="step-circle">2</div></div>
+      <div class="step-indicator" id="ind-3"><div class="step-circle">3</div></div>
+      <div class="step-indicator" id="ind-4"><div class="step-circle">4</div></div>
+      <div class="step-indicator" id="ind-5"><div class="step-circle"><i class="fa-solid fa-heart"></i></div></div>
     </div>
 
-    <div class="step-content step-active" id="step1">
+    <div class="header"><h1 id="step-title">步驟 1: 情緒辨識</h1></div>
+
+    <div class="step-content step-show" id="step1">
       <div class="question">您現在的感覺比較像是哪一種？</div>
       <div class="options" id="opt-step1">
         <div class="option-btn" data-val="心情不好"><i class="fa-solid fa-cloud-rain"></i>心情不好</div>
@@ -120,15 +133,15 @@
     let currentStep = 1;
     const TOTAL_STEPS = 5;
     const selections = { step1: '', step2: '', step3: '', step4: '', story: '' };
+    const stepTitles = ["", "步驟 1: 情緒辨識", "步驟 2: 來源定位", "步驟 3: 狀態梳理", "步驟 4: 需求定義", "步驟 5: 傾聽心聲"];
     
     // ⚠️ 必填設定
     const LIFF_ID = "2010092951-eighli12"; 
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzTARBcKDYLsgk5KN-NMXSYRnTy7o_7JFuymFFy78a6xt_lpzJSz2WnR9ydwCnLX4y8/exec"; // 必須填入部署後的 GAS 網址
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzTARBcKDYLsgk5KN-NMXSYRnTy7o_7JFuymFFy78a6xt_lpzJSz2WnR9ydwCnLX4y8/exec"; 
 
     async function init() {
       try {
         await liff.init({ liffId: LIFF_ID });
-        // 【防護機制】檢查是否在 LINE 裡面開啟
         if (!liff.isInClient()) {
           document.getElementById('error-screen').style.display = 'block';
         } else {
@@ -138,7 +151,6 @@
     }
     init();
 
-    // 處理點擊
     document.querySelectorAll('.option-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const stepId = this.parentElement.id.replace('opt-', '');
@@ -148,43 +160,40 @@
       });
     });
 
-    const stepTitles = ["", "步驟 1: 情緒辨識", "步驟 2: 來源定位", "步驟 3: 狀態梳理", "步驟 4: 需求定義", "步驟 5: 傾聽心聲"];
+    function updateStepper() {
+      for (let i = 1; i <= TOTAL_STEPS; i++) {
+        const ind = document.getElementById(`ind-${i}`);
+        ind.classList.remove('step-active', 'step-completed');
+        if (i < currentStep) ind.classList.add('step-completed');
+        if (i === currentStep) ind.classList.add('step-active');
+      }
+    }
 
     document.getElementById('nextBtn').addEventListener('click', async () => {
-      // 驗證 1-4 步是否有點選
       if (currentStep < 5 && !selections[`step${currentStep}`]) { alert("請先選一個選項喔。"); return; }
       
       if (currentStep < TOTAL_STEPS) {
-        document.getElementById(`step${currentStep}`).classList.remove('step-active');
+        document.getElementById(`step${currentStep}`).classList.remove('step-show');
         currentStep++;
-        document.getElementById(`step${currentStep}`).classList.add('step-active');
-        document.getElementById('progress').style.width = (currentStep * 20) + '%';
+        document.getElementById(`step${currentStep}`).classList.add('step-show');
         document.getElementById('step-title').innerText = stepTitles[currentStep];
         document.getElementById('prevBtn').style.display = 'block';
-        
         if (currentStep === TOTAL_STEPS) document.getElementById('nextBtn').innerText = '梳理完成';
+        updateStepper();
       } else {
-        // 進入隱形傳送模式
         const nextBtn = document.getElementById('nextBtn');
         nextBtn.innerText = '傳送中...';
         nextBtn.disabled = true;
         
         selections.story = document.getElementById('user-story').value.trim();
 
-        const payload = {
-          action: 'submitAnalysis',
-          userId: liff.getContext().userId,
-          data: selections
-        };
-
-        // 靜默發送至 GAS，設定 Content-Type 避免 CORS 阻擋
         try {
           await fetch(GAS_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ action: 'submitAnalysis', userId: liff.getContext().userId, data: selections })
           });
-          liff.closeWindow(); // 發送完瞬間關閉，完美銜接
+          liff.closeWindow(); 
         } catch (e) {
           alert("網路不穩，請確認網路連線。");
           nextBtn.innerText = '重新傳送';
@@ -194,13 +203,13 @@
     });
 
     document.getElementById('prevBtn').addEventListener('click', () => {
-      document.getElementById(`step${currentStep}`).classList.remove('step-active');
+      document.getElementById(`step${currentStep}`).classList.remove('step-show');
       currentStep--;
-      document.getElementById(`step${currentStep}`).classList.add('step-active');
-      document.getElementById('progress').style.width = (currentStep * 20) + '%';
+      document.getElementById(`step${currentStep}`).classList.add('step-show');
       document.getElementById('step-title').innerText = stepTitles[currentStep];
       if (currentStep === 1) document.getElementById('prevBtn').style.display = 'none';
       document.getElementById('nextBtn').innerText = '下一步';
+      updateStepper();
     });
   </script>
 </body>
