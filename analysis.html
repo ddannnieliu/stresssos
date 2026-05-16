@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>情緒梳理路徑</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4A4A4A; margin: 0; }
     .container { max-width: 500px; margin: auto; padding-bottom: 100px; }
@@ -14,98 +15,130 @@
     .progress-inner { height: 100%; background: #E6C9B3; border-radius: 3px; transition: width 0.3s; }
     
     .step-content { display: none; }
-    .step-active { display: block; }
+    .step-active { display: block; animation: fadeIn 0.4s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
     .question { font-size: 18px; margin-bottom: 30px; text-align: center; line-height: 1.6; color: #6D5C4F; }
     .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .option-btn { 
       background: white; border: 1px solid #EEE; padding: 20px 10px; border-radius: 12px; 
       text-align: center; font-size: 15px; cursor: pointer; transition: all 0.2s; color: #666;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
     }
+    .option-btn i { font-size: 24px; color: #D4B59D; transition: all 0.2s; }
     .option-btn.selected { background: #E6C9B3; color: white; border-color: #E6C9B3; font-weight: bold; }
+    .option-btn.selected i { color: white; }
+
+    textarea {
+      width: 100%; padding: 15px; border: 1px solid #DDD; border-radius: 12px; font-size: 15px;
+      background: white; color: #4A4A4A; box-sizing: border-box; resize: none; line-height: 1.5;
+    }
+    textarea:focus { outline: none; border-color: #E6C9B3; }
 
     .footer { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); display: flex; gap: 12px; box-sizing: border-box; }
-    .btn { flex: 1; padding: 15px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .btn { flex: 1; padding: 15px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-prev { background: #EEE; color: #888; }
     .btn-next { background: #E6C9B3; color: #6D5C4F; }
+    .btn-next:disabled { background: #CCC; cursor: not-allowed; }
+
+    #error-screen { display: none; text-align: center; margin-top: 40vh; color: #8C8C8C; font-size: 16px; line-height: 1.6; }
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <div id="error-screen">
+    <i class="fa-solid fa-mobile-screen" style="font-size: 40px; margin-bottom: 20px; color: #CCC;"></i><br>
+    為確保隱私與最佳體驗<br>請在 LINE App 中開啟此畫面喔！
+  </div>
+
+  <div class="container" id="app-container" style="display: none;">
     <div class="header">
       <h1 id="step-title">步驟 1: 情緒辨識</h1>
-      <div class="progress-bar"><div class="progress-inner" id="progress" style="width: 25%;"></div></div>
+      <div class="progress-bar"><div class="progress-inner" id="progress" style="width: 20%;"></div></div>
     </div>
 
     <div class="step-content step-active" id="step1">
       <div class="question">您現在的感覺比較像是哪一種？</div>
       <div class="options" id="opt-step1">
-        <div class="option-btn" data-val="心情不好">心情不好</div>
-        <div class="option-btn" data-val="心累想躺平">心累想躺平</div>
-        <div class="option-btn" data-val="生氣憤怒">生氣憤怒</div>
-        <div class="option-btn" data-val="難過低落">難過低落</div>
-        <div class="option-btn" data-val="有點焦慮">有點焦慮</div>
-        <div class="option-btn" data-val="麻木沒動力">麻木沒動力</div>
+        <div class="option-btn" data-val="心情不好"><i class="fa-solid fa-cloud-rain"></i>心情不好</div>
+        <div class="option-btn" data-val="心累想躺平"><i class="fa-solid fa-battery-quarter"></i>心累想躺平</div>
+        <div class="option-btn" data-val="生氣憤怒"><i class="fa-solid fa-fire"></i>生氣憤怒</div>
+        <div class="option-btn" data-val="難過低落"><i class="fa-solid fa-droplet"></i>難過低落</div>
+        <div class="option-btn" data-val="有點焦慮"><i class="fa-solid fa-bolt"></i>有點焦慮</div>
+        <div class="option-btn" data-val="麻木沒動力"><i class="fa-solid fa-snowflake"></i>麻木沒動力</div>
       </div>
     </div>
 
     <div class="step-content" id="step2">
       <div class="question">這份重量的主要來源是？</div>
       <div class="options" id="opt-step2">
-        <div class="option-btn" data-val="金錢問題">金錢問題</div>
-        <div class="option-btn" data-val="課業壓力">課業壓力</div>
-        <div class="option-btn" data-val="工作煩憂">工作煩憂</div>
-        <div class="option-btn" data-val="人際關係">人際關係</div>
-        <div class="option-btn" data-val="家庭矛盾">家庭矛盾</div>
-        <div class="option-btn" data-val="感情困擾">感情困擾</div>
+        <div class="option-btn" data-val="金錢問題"><i class="fa-solid fa-coins"></i>金錢問題</div>
+        <div class="option-btn" data-val="課業壓力"><i class="fa-solid fa-book"></i>課業壓力</div>
+        <div class="option-btn" data-val="工作煩憂"><i class="fa-solid fa-briefcase"></i>工作煩憂</div>
+        <div class="option-btn" data-val="人際關係"><i class="fa-solid fa-users"></i>人際關係</div>
+        <div class="option-btn" data-val="家庭矛盾"><i class="fa-solid fa-house"></i>家庭矛盾</div>
+        <div class="option-btn" data-val="感情困擾"><i class="fa-solid fa-heart"></i>感情困擾</div>
       </div>
     </div>
 
     <div class="step-content" id="step3">
       <div class="question">目前的心理狀態更接近？</div>
       <div class="options" id="opt-step3">
-        <div class="option-btn" data-val="一直想停不下來">一直想停不下來</div>
-        <div class="option-btn" data-val="很累但不能休息">很累但不能休息</div>
-        <div class="option-btn" data-val="覺得自己不夠好">覺得自己不夠好</div>
-        <div class="option-btn" data-val="對未來感到不安">對未來感到不安</div>
-        <div class="option-btn" data-val="對某人感到憤怒">對某人感到憤怒</div>
-        <div class="option-btn" data-val="提不起精神做事">提不起精神做事</div>
+        <div class="option-btn" data-val="腦中一直想"><i class="fa-solid fa-arrows-spin"></i>腦中一直想</div>
+        <div class="option-btn" data-val="很累不能休"><i class="fa-solid fa-person-running"></i>很累不能休</div>
+        <div class="option-btn" data-val="覺得不夠好"><i class="fa-solid fa-arrow-trend-down"></i>覺得不夠好</div>
+        <div class="option-btn" data-val="對未來不安"><i class="fa-solid fa-compass"></i>對未來不安</div>
+        <div class="option-btn" data-val="對某人憤怒"><i class="fa-solid fa-user-injured"></i>對某人憤怒</div>
+        <div class="option-btn" data-val="提不起精神"><i class="fa-solid fa-bed"></i>提不起精神</div>
       </div>
     </div>
 
     <div class="step-content" id="step4">
       <div class="question">此刻您最需要的是什麼呢？</div>
       <div class="options" id="opt-step4">
-        <div class="option-btn" data-val="有人聽我訴說">有人聽我訴說</div>
-        <div class="option-btn" data-val="幫我釐清現況">幫我釐清現況</div>
-        <div class="option-btn" data-val="具體的解決建議">具體的解決建議</div>
-        <div class="option-btn" data-val="先穩住情緒">先穩住情緒</div>
-        <div class="option-btn" data-val="安靜休息">安靜休息</div>
-        <div class="option-btn" data-val="我也不知道">我也不知道</div>
+        <div class="option-btn" data-val="聽我訴說"><i class="fa-solid fa-ear-listen"></i>聽我訴說</div>
+        <div class="option-btn" data-val="釐清現況"><i class="fa-solid fa-magnifying-glass-chart"></i>釐清現況</div>
+        <div class="option-btn" data-val="解決建議"><i class="fa-solid fa-lightbulb"></i>解決建議</div>
+        <div class="option-btn" data-val="穩住情緒"><i class="fa-solid fa-anchor"></i>穩住情緒</div>
+        <div class="option-btn" data-val="安靜休息"><i class="fa-solid fa-mug-hot"></i>安靜休息</div>
+        <div class="option-btn" data-val="我不知道"><i class="fa-solid fa-circle-question"></i>我不知道</div>
       </div>
     </div>
 
+    <div class="step-content" id="step5">
+      <div class="question">想多說一點嗎？發生了什麼事？<br><span style="font-size:14px;color:#888;">(選填，幫助我更了解你)</span></div>
+      <textarea id="user-story" rows="6" placeholder="例如：今天跟同事起了爭執，覺得很委屈..."></textarea>
+    </div>
+
     <div class="footer">
-      <button class="btn btn-prev" id="prevBtn" style="display:none;">回上一步</button>
+      <button class="btn btn-prev" id="prevBtn" style="display:none;">上一步</button>
       <button class="btn btn-next" id="nextBtn">下一步</button>
     </div>
   </div>
 
   <script>
     let currentStep = 1;
-    const selections = { step1: '', step2: '', step3: '', step4: '' };
+    const TOTAL_STEPS = 5;
+    const selections = { step1: '', step2: '', step3: '', step4: '', story: '' };
     
-    // ⚠️ 請在這裡換上您為這個分析網頁申請的 LIFF ID
+    // ⚠️ 必填設定
     const LIFF_ID = "2010092951-eighli12"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzTARBcKDYLsgk5KN-NMXSYRnTy7o_7JFuymFFy78a6xt_lpzJSz2WnR9ydwCnLX4y8/exec"; // 必須填入部署後的 GAS 網址
 
     async function init() {
       try {
         await liff.init({ liffId: LIFF_ID });
-      } catch (e) { console.error("LIFF 初始化失敗"); }
+        // 【防護機制】檢查是否在 LINE 裡面開啟
+        if (!liff.isInClient()) {
+          document.getElementById('error-screen').style.display = 'block';
+        } else {
+          document.getElementById('app-container').style.display = 'block';
+        }
+      } catch (e) { alert("系統初始化失敗"); }
     }
     init();
 
-    // 處理選項點擊效果
+    // 處理點擊
     document.querySelectorAll('.option-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const stepId = this.parentElement.id.replace('opt-', '');
@@ -115,28 +148,48 @@
       });
     });
 
-    const stepTitles = ["", "步驟 1: 情緒辨識", "步驟 2: 來源定位", "步驟 3: 狀態梳理", "步驟 4: 需求定義"];
+    const stepTitles = ["", "步驟 1: 情緒辨識", "步驟 2: 來源定位", "步驟 3: 狀態梳理", "步驟 4: 需求定義", "步驟 5: 傾聽心聲"];
 
     document.getElementById('nextBtn').addEventListener('click', async () => {
-      if (!selections[`step${currentStep}`]) { alert("請先選擇一個選項喔。"); return; }
+      // 驗證 1-4 步是否有點選
+      if (currentStep < 5 && !selections[`step${currentStep}`]) { alert("請先選一個選項喔。"); return; }
       
-      if (currentStep < 4) {
+      if (currentStep < TOTAL_STEPS) {
         document.getElementById(`step${currentStep}`).classList.remove('step-active');
         currentStep++;
         document.getElementById(`step${currentStep}`).classList.add('step-active');
-        document.getElementById('progress').style.width = (currentStep * 25) + '%';
+        document.getElementById('progress').style.width = (currentStep * 20) + '%';
         document.getElementById('step-title').innerText = stepTitles[currentStep];
         document.getElementById('prevBtn').style.display = 'block';
-        if (currentStep === 4) document.getElementById('nextBtn').innerText = '查看建議';
+        
+        if (currentStep === TOTAL_STEPS) document.getElementById('nextBtn').innerText = '梳理完成';
       } else {
-        // 完成梳理，將結果傳回 LINE 聊天室
+        // 進入隱形傳送模式
+        const nextBtn = document.getElementById('nextBtn');
+        nextBtn.innerText = '傳送中...';
+        nextBtn.disabled = true;
+        
+        selections.story = document.getElementById('user-story').value.trim();
+
+        const payload = {
+          action: 'submitAnalysis',
+          userId: liff.getContext().userId,
+          data: selections
+        };
+
+        // 靜默發送至 GAS，設定 Content-Type 避免 CORS 阻擋
         try {
-          await liff.sendMessages([{
-            type: 'text',
-            text: `分析紀錄：${selections.step1}, ${selections.step2}, ${selections.step3}, ${selections.step4}`
-          }]);
-          liff.closeWindow();
-        } catch (e) { alert("傳送失敗，請確保您是在 LINE App 中開啟此畫面。"); }
+          await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+          liff.closeWindow(); // 發送完瞬間關閉，完美銜接
+        } catch (e) {
+          alert("網路不穩，請確認網路連線。");
+          nextBtn.innerText = '重新傳送';
+          nextBtn.disabled = false;
+        }
       }
     });
 
@@ -144,7 +197,7 @@
       document.getElementById(`step${currentStep}`).classList.remove('step-active');
       currentStep--;
       document.getElementById(`step${currentStep}`).classList.add('step-active');
-      document.getElementById('progress').style.width = (currentStep * 25) + '%';
+      document.getElementById('progress').style.width = (currentStep * 20) + '%';
       document.getElementById('step-title').innerText = stepTitles[currentStep];
       if (currentStep === 1) document.getElementById('prevBtn').style.display = 'none';
       document.getElementById('nextBtn').innerText = '下一步';
