@@ -11,7 +11,6 @@
     body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4A4A4A; margin: 0; }
     .container { max-width: 600px; margin: auto; padding-bottom: 40px; }
     
-    /* 頂部切換標籤 */
     .tab-container { display: flex; background: #EEE; border-radius: 12px; padding: 5px; margin-bottom: 20px; }
     .tab-btn { flex: 1; text-align: center; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: #888; transition: 0.3s; }
     .tab-btn.active { background: #FFF; color: #6D5C4F; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -20,12 +19,10 @@
     .view-active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* --- 日記模式切換器 --- */
     .view-toggle { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; }
     .toggle-btn { background: transparent; border: 1px solid #CCC; padding: 5px 12px; border-radius: 20px; font-size: 13px; color: #888; cursor: pointer; }
     .toggle-btn.active { background: #6D5C4F; color: white; border-color: #6D5C4F; }
 
-    /* --- 列表樣式 --- */
     .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-left: 4px solid #E6C9B3; }
     .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .date { font-size: 13px; color: #aaaaaa; font-weight: bold; }
@@ -33,7 +30,6 @@
     .diary-content { font-size: 14px; color: #666; line-height: 1.5; word-break: break-word; }
     .no-diary { font-style: italic; color: #cccccc; font-size: 13px; }
 
-    /* --- 月曆樣式 --- */
     .cal-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
     .cal-header button { background: none; border: none; font-size: 18px; color: #6D5C4F; cursor: pointer; padding: 5px 15px; }
     .cal-month-label { font-weight: bold; font-size: 16px; color: #6D5C4F; }
@@ -45,11 +41,9 @@
     .cal-cell.has-record { background: #F4EBE1; cursor: pointer; border: 1px solid #E6C9B3; transition: transform 0.1s; }
     .cal-cell.has-record:active { transform: scale(0.95); }
     .cal-cell.selected { background: #6D5C4F; color: white; border-color: #6D5C4F; }
-    
     .cal-date-num { font-size: 12px; font-weight: bold; color: inherit; }
     .cal-emoji { font-size: 16px; margin-top: 2px; }
 
-    /* --- 儀表板樣式 --- */
     .dash-header-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .dash-title h1 { font-size: 20px; color: #6D5C4F; margin: 0 0 5px 0; }
     .dash-title p { font-size: 13px; color: #888; margin: 0; }
@@ -66,7 +60,7 @@
 
     .ai-message { background: linear-gradient(135deg, #FFF, #F4EBE1); padding: 20px; border-radius: 15px; border: 1px solid #E6C9B3; color: #6D5C4F; line-height: 1.6; font-size: 15px; }
 
-    #status { text-align: center; margin-top: 30vh; color: #8c8c8c; font-size: 15px; line-height: 1.6; }
+    #status { text-align: center; margin-top: 30vh; color: #8c8c8c; font-size: 15px; line-height: 1.6; padding: 20px; word-break: break-all; }
     #error-screen { display: none; text-align: center; margin-top: 40vh; color: #8C8C8C; font-size: 16px; line-height: 1.6; }
   </style>
 </head>
@@ -80,21 +74,16 @@
   <div id="status">資料同步中，請稍候...⏳</div>
 
   <div class="container" id="app-container" style="display: none;">
-    
     <div class="tab-container">
       <div class="tab-btn active" id="tab-diary" onclick="switchTab('diary')">近期日記</div>
       <div class="tab-btn" id="tab-report" onclick="switchTab('report')">月度報告</div>
     </div>
-
     <div class="view-section view-active" id="view-diary">
-      
       <div class="view-toggle">
         <button class="toggle-btn active" id="btn-list" onclick="setDiaryMode('list')">列表</button>
         <button class="toggle-btn" id="btn-cal" onclick="setDiaryMode('calendar')">月曆</button>
       </div>
-
       <div id="mode-list"></div>
-
       <div id="mode-calendar" style="display: none;">
         <div class="cal-header">
           <button onclick="changeCalMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
@@ -104,57 +93,40 @@
         <div class="cal-grid" id="cal-grid"></div>
         <div id="cal-detail-card" style="display: none; margin-top: 15px;"></div>
       </div>
-
     </div>
-
     <div class="view-section" id="view-report">
       <div class="dash-header-wrap">
-        <div class="dash-title">
-          <h1>情緒分析報告</h1>
-          <p>回顧這段時間的內心旅程</p>
-        </div>
+        <div class="dash-title"><h1>情緒分析報告</h1><p>回顧這段時間的內心旅程</p></div>
         <select class="month-selector" id="report-month-select" onchange="renderDashboard()"></select>
       </div>
-
       <div class="stats-grid">
-        <div class="stat-box">
-          <i class="fa-solid fa-calendar-check"></i>
-          <div class="stat-value" id="stat-days">0</div>
-          <div class="stat-label">本月紀錄天數</div>
-        </div>
-        <div class="stat-box">
-          <i class="fa-solid fa-heart-pulse"></i>
-          <div class="stat-value" id="stat-avg">0.0</div>
-          <div class="stat-label">平均心情分數</div>
-        </div>
+        <div class="stat-box"><i class="fa-solid fa-calendar-check"></i><div class="stat-value" id="stat-days">0</div><div class="stat-label">本月紀錄天數</div></div>
+        <div class="stat-box"><i class="fa-solid fa-heart-pulse"></i><div class="stat-value" id="stat-avg">0.0</div><div class="stat-label">平均心情分數</div></div>
       </div>
-
-      <div class="chart-container">
-        <div class="chart-title">心情趨勢圖</div>
-        <canvas id="trendChart" height="200"></canvas>
-      </div>
-
-      <div class="chart-container">
-        <div class="chart-title">情緒比例分佈</div>
-        <canvas id="pieChart" height="200"></canvas>
-      </div>
-
-      <div class="ai-message">
-        <div style="font-weight:bold; margin-bottom:10px;"><i class="fa-solid fa-envelope-open-text"></i>給你的話</div>
-        <div id="warm-message">正在分析您的情緒密碼...</div>
-      </div>
+      <div class="chart-container"><div class="chart-title">心情趨勢圖</div><canvas id="trendChart" height="200"></canvas></div>
+      <div class="chart-container"><div class="chart-title">情緒比例分佈</div><canvas id="pieChart" height="200"></canvas></div>
+      <div class="ai-message"><div style="font-weight:bold; margin-bottom:10px;"><i class="fa-solid fa-envelope-open-text"></i>給你的話</div><div id="warm-message">正在分析您的情緒密碼...</div></div>
     </div>
-
   </div>
 
   <script>
+    // ==========================================
+    // 🛡️ 全域錯誤捕捉機制 (不再讓你死得不明不白)
+    // ==========================================
+    window.onerror = function(msg, url, lineNo) {
+      document.getElementById("status").innerHTML = `<span style="color:#D97A7A; font-weight:bold; font-size:16px;">❌ 系統語法崩潰</span><br><br><span style="color:#888; font-size:14px;">錯誤：${msg}<br>行數：${lineNo}</span>`;
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      document.getElementById("status").innerHTML = `<span style="color:#D97A7A; font-weight:bold; font-size:16px;">❌ 網路或非同步錯誤</span><br><br><span style="color:#888; font-size:14px;">原因：${event.reason}</span>`;
+    });
+
     // ==========================================
     // ⚠️ 必填設定區 (請務必替換為您真實的資料)
     // ==========================================
     const LIFF_ID = "2010092951-xlisrv8p"; 
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzTARBcKDYLsgk5KN-NMXSYRnTy7o_7JFuymFFy78a6xt_lpzJSz2WnR9ydwCnLX4y8/exec"; 
 
-    // 情緒 Emoji 映射表 (保留給月曆跟列表使用)
     const moodEmoji = { "超棒":"😄", "還不錯":"🙂", "平靜":"😐", "低落":"😞", "想哭":"😭", "崩潰":"😫" };
 
     let rawData = [];
@@ -164,28 +136,38 @@
 
     async function init() {
       try {
+        if (!LIFF_ID || LIFF_ID === "請填寫您的_心情日記LIFF_ID") {
+          throw new Error("您尚未填寫 LIFF_ID！");
+        }
+
         await liff.init({ liffId: LIFF_ID });
+        
+        // 判斷裝置環境
         if (!liff.isInClient()) {
           document.getElementById('status').style.display = 'none';
           document.getElementById('error-screen').style.display = 'block';
           return;
         }
+
+        // 嚴格取得帳號資料
+        const context = liff.getContext();
+        if (!context || !context.userId) {
+          throw new Error("無法取得您的 LINE UserID，可能發生了環境辨識錯誤或未授權。");
+        }
         
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('tab') === 'report') switchTab('report');
 
-        fetchData(liff.getContext().userId);
+        fetchData(context.userId);
       } catch (err) { 
-        document.getElementById("status").innerHTML = `<span style="color:#D97A7A; font-weight:bold;">❌ LIFF 初始化失敗，請稍後再試。</span>`;
+        document.getElementById("status").innerHTML = `<span style="color:#D97A7A; font-weight:bold; font-size:16px;">❌ LIFF 初始化失敗</span><br><br><span style="color:#888; font-size:14px;">詳情：${err.message}</span>`;
       }
     }
 
-    // 🌟 升級版 fetchData：自帶錯誤捕捉與提示功能
     async function fetchData(userId) {
       try {
         const res = await fetch(GAS_URL + "?action=getMoodData&userId=" + userId, { redirect: 'follow' });
-        
-        if (!res.ok) throw new Error("伺服器沒有回應 (代碼: " + res.status + ")");
+        if (!res.ok) throw new Error("伺服器回應異常 (代碼: " + res.status + ")");
         
         rawData = await res.json(); 
         
@@ -198,4 +180,27 @@
       } catch (err) {
         document.getElementById("status").innerHTML = `
           <span style="color:#D97A7A; font-weight:bold; font-size:16px;">❌ 讀取資料失敗</span><br><br>
-          <span style="color
+          <span style="color:#888; font-size:14px;">詳情：${err.message}</span><br><br>
+          <div style="text-align:left; background:white; padding:15px; border-radius:10px; font-size:14px; color:#666;">
+            💡 <b>請檢查：</b><br>
+            1. GAS_URL 結尾是否為 /exec<br>
+            2. GAS 是否有建立「新版本」部署<br>
+            3. 試算表內是否有空白列
+          </div>`;
+      }
+    }
+
+    // --- 以下為 UI 渲染邏輯 (與上一版完全相同) ---
+    function switchTab(tabId) { document.getElementById('tab-diary').classList.remove('active'); document.getElementById('tab-report').classList.remove('active'); document.getElementById('view-diary').classList.remove('view-active'); document.getElementById('view-report').classList.remove('view-active'); document.getElementById(`tab-${tabId}`).classList.add('active'); document.getElementById(`view-${tabId}`).classList.add('view-active'); }
+    function setDiaryMode(mode) { document.getElementById('btn-list').classList.remove('active'); document.getElementById('btn-cal').classList.remove('active'); document.getElementById('mode-list').style.display = 'none'; document.getElementById('mode-calendar').style.display = 'none'; document.getElementById(`btn-${mode === 'list' ? 'list' : 'cal'}`).classList.add('active'); document.getElementById(`mode-${mode}`).style.display = 'block'; if (mode === 'list') renderDiaryList(); else renderCalendar(); }
+    function renderDiaryList() { const listDiv = document.getElementById("mode-list"); if (rawData.length === 0) { listDiv.innerHTML = "<p style='text-align:center; color:#ccc; margin-top:50px;'>尚無紀錄，今晚記得來打卡喔！</p>"; return; } listDiv.innerHTML = ''; rawData.slice(0, 15).forEach(item => { const card = document.createElement("div"); card.className = "card"; const dateParts = item.date.split('-'); const shortDate = `${dateParts[1]}/${dateParts[2]}`; const emoji = moodEmoji[item.mood] || ""; const diaryHtml = (item.diary && item.diary.trim() !== "") ? `<div class="diary-content">${item.diary}</div>` : `<div class="diary-content no-diary">這天沒有留下備註</div>`; card.innerHTML = `<div class="card-top"><span class="date">${shortDate}</span><span class="mood-tag">${emoji} ${item.mood}</span></div>${diaryHtml}`; listDiv.appendChild(card); }); }
+    function changeCalMonth(offset) { currentCalDate.setMonth(currentCalDate.getMonth() + offset); document.getElementById('cal-detail-card').style.display = 'none'; renderCalendar(); }
+    function renderCalendar() { const y = currentCalDate.getFullYear(); const m = currentCalDate.getMonth(); document.getElementById('cal-month-label').innerText = `${y}年${m + 1}月`; const firstDay = new Date(y, m, 1).getDay(); const daysInMonth = new Date(y, m + 1, 0).getDate(); const grid = document.getElementById('cal-grid'); let html = '<div class="cal-day-header">日</div><div class="cal-day-header">一</div><div class="cal-day-header">二</div><div class="cal-day-header">三</div><div class="cal-day-header">四</div><div class="cal-day-header">五</div><div class="cal-day-header">六</div>'; for (let i = 0; i < firstDay; i++) { html += '<div class="cal-cell empty"></div>'; } for (let d = 1; d <= daysInMonth; d++) { const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const record = rawData.find(r => r.date === dateStr); if (record) { const emoji = moodEmoji[record.mood] || ""; html += `<div class="cal-cell has-record" id="cell-${dateStr}" onclick="showCalDetail('${dateStr}')"><div class="cal-date-num">${d}</div><div class="cal-emoji">${emoji}</div></div>`; } else { html += `<div class="cal-cell"><div class="cal-date-num" style="color:#CCC;">${d}</div></div>`; } } grid.innerHTML = html; }
+    function showCalDetail(dateStr) { document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected')); document.getElementById(`cell-${dateStr}`).classList.add('selected'); const record = rawData.find(r => r.date === dateStr); const detailCard = document.getElementById('cal-detail-card'); if (record) { const emoji = moodEmoji[record.mood] || ""; const diaryHtml = (record.diary && record.diary.trim() !== "") ? `<div class="diary-content">${record.diary}</div>` : `<div class="diary-content no-diary">這天沒有留下備註</div>`; detailCard.innerHTML = `<div class="card" style="margin-bottom:0; border-left-color:#6D5C4F;"><div class="card-top"><span class="date">${dateStr.replace(/-/g, '/')}</span><span class="mood-tag">${emoji} ${record.mood}</span></div>${diaryHtml}</div>`; detailCard.style.display = 'block'; } }
+    function populateMonthSelector() { const select = document.getElementById('report-month-select'); const months = new Set(); rawData.forEach(r => months.add(r.date.substring(0, 7))); const sortedMonths = Array.from(months).sort().reverse(); select.innerHTML = ''; if (sortedMonths.length === 0) { const today = new Date(); select.innerHTML = `<option value="">${today.getFullYear()}年${today.getMonth()+1}月</option>`; return; } sortedMonths.forEach(ym => { const [year, month] = ym.split('-'); select.innerHTML += `<option value="${ym}">${year}年${parseInt(month)}月</option>`; }); }
+    function renderDashboard() { if (rawData.length === 0) { document.getElementById("warm-message").innerText = "目前還沒有足夠的資料可以分析，請持續記錄幾天，讓我更了解你喔！"; return; } const selectedYM = document.getElementById('report-month-select').value; const chartData = rawData.filter(r => r.date.startsWith(selectedYM)).reverse(); const days = chartData.length; if (days === 0) { document.getElementById("stat-days").innerText = 0; document.getElementById("stat-avg").innerText = "-"; if(trendChartInstance) trendChartInstance.destroy(); if(pieChartInstance) pieChartInstance.destroy(); document.getElementById("warm-message").innerText = "這個月還沒有留下紀錄喔。"; return; } let totalScore = 0; const scoreCounts = { "超棒":0, "還不錯":0, "平靜":0, "低落":0, "想哭":0, "崩潰":0 }; const labels = []; const scores = []; chartData.forEach(item => { totalScore += item.score; if(scoreCounts[item.mood] !== undefined) scoreCounts[item.mood]++; labels.push(item.date.split('-')[2]); scores.push(item.score); }); const avgScore = (totalScore / days).toFixed(1); document.getElementById("stat-days").innerText = days; document.getElementById("stat-avg").innerText = avgScore; let msg = ""; if (avgScore >= 4.5) msg = "這段時間的狀態維持得很不錯呢！那些開心的瞬間，都成為了你前進的養分。繼續保持這份對生活的覺察，你已經做得很棒了。"; else if (avgScore >= 3.5) msg = "這陣子的情緒像平靜的湖水，雖然沒有太多波瀾，但也代表著一種安穩的力量。每一天平順的度過，就是對自己最好的照顧。"; else msg = "這段時間的你，真的辛苦了。可能經歷了一些內心的拉扯，但請記得，願意記錄下這些低谷的你，其實非常勇敢。我會一直在這裡陪著你度過。"; document.getElementById("warm-message").innerText = msg; const ctxTrend = document.getElementById('trendChart').getContext('2d'); if(trendChartInstance) trendChartInstance.destroy(); trendChartInstance = new Chart(ctxTrend, { type: 'line', data: { labels: labels, datasets: [{ label: '心情分數', data: scores, borderColor: '#D4B59D', backgroundColor: 'rgba(212, 181, 157, 0.2)', borderWidth: 2, tension: 0.3, fill: true, pointBackgroundColor: '#6D5C4F' }] }, options: { responsive: true, scales: { y: { min: 1, max: 6, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } } }); const ctxPie = document.getElementById('pieChart').getContext('2d'); if(pieChartInstance) pieChartInstance.destroy(); pieChartInstance = new Chart(ctxPie, { type: 'doughnut', data: { labels: ["超棒", "還不錯", "平靜", "低落", "想哭", "崩潰"], datasets: [{ data: [scoreCounts["超棒"], scoreCounts["還不錯"], scoreCounts["平靜"], scoreCounts["低落"], scoreCounts["想哭"], scoreCounts["崩潰"]], backgroundColor: ['#A8D5BA', '#C1E1C1', '#F4EBE1', '#FCD5CE', '#F4978E', '#D97A7A'], borderWidth: 0 }] }, options: { responsive: true, cutout: '65%', plugins: { legend: { position: 'right', labels: { font: { size: 12 }, boxWidth: 12 } } } } }); }
+
+    init();
+  </script>
+</body>
+</html>
