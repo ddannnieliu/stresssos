@@ -1,123 +1,259 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>心情日記</title>
+  <title>專屬心情儀表板</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4a4a4a; margin: 0; }
-    .header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
-    .header h1 { font-size: 22px; color: #6d5c4f; margin: 0; letter-spacing: 1px; }
-    .header p { font-size: 14px; color: #8c8c8c; margin-top: 5px; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4A4A4A; margin: 0; }
+    .container { max-width: 600px; margin: auto; padding-bottom: 40px; }
     
-    .card { 
-      background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; 
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-left: 4px solid #E6C9B3;
-    }
+    /* 頂部切換標籤 */
+    .tab-container { display: flex; background: #EEE; border-radius: 12px; padding: 5px; margin-bottom: 25px; }
+    .tab-btn { flex: 1; text-align: center; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: #888; transition: 0.3s; }
+    .tab-btn.active { background: #FFF; color: #6D5C4F; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+    .view-section { display: none; animation: fadeIn 0.4s; }
+    .view-active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 日記卡片樣式 */
+    .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-left: 4px solid #E6C9B3; }
     .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .date { font-size: 13px; color: #aaaaaa; font-weight: bold; }
-    .mood-tag { 
-      background-color: #F4EBE1; color: #6d5c4f; padding: 4px 10px; 
-      border-radius: 12px; font-size: 13px; font-weight: bold; 
-    }
+    .mood-tag { background-color: #F4EBE1; color: #6d5c4f; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; }
     .diary-content { font-size: 14px; color: #666; line-height: 1.5; word-break: break-word; }
     .no-diary { font-style: italic; color: #cccccc; font-size: 13px; }
+
+    /* 儀表板樣式 */
+    .dash-header { text-align: center; margin-bottom: 20px; color: #6D5C4F; }
+    .dash-header h1 { font-size: 22px; margin: 0 0 5px 0; }
+    .dash-header p { font-size: 14px; color: #888; margin: 0; }
     
-    #status { text-align: center; margin-top: 50px; font-size: 15px; color: #8c8c8c; padding: 20px; word-break: break-all; }
-    .error-text { color: #d9534f !important; font-weight: bold; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .stat-box { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+    .stat-box i { font-size: 24px; color: #E6C9B3; margin-bottom: 10px; }
+    .stat-value { font-size: 28px; font-weight: bold; color: #6D5C4F; margin-bottom: 5px; }
+    .stat-label { font-size: 13px; color: #888; }
+
+    .chart-container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 20px; }
+    .chart-title { font-size: 16px; font-weight: bold; color: #6D5C4F; margin-bottom: 15px; text-align: center; }
+
+    .ai-message { background: linear-gradient(135deg, #FFF, #F4EBE1); padding: 20px; border-radius: 15px; border: 1px solid #E6C9B3; color: #6D5C4F; line-height: 1.6; font-size: 15px; }
+    .ai-message i { color: #D4B59D; margin-right: 8px; }
+
+    #status { text-align: center; margin-top: 40vh; color: #8c8c8c; font-size: 15px; }
+    #error-screen { display: none; text-align: center; margin-top: 40vh; color: #8C8C8C; font-size: 16px; line-height: 1.6; }
   </style>
 </head>
 <body>
-  
-  <div id="status">啟動中，請稍候...⏳</div>
-  
-  <div id="main-content" style="display:none;">
-    <div class="header">
-      <h1>心情日記</h1>
-      <p>回顧最近的情緒起伏</p>
+
+  <div id="error-screen">
+    <i class="fa-solid fa-mobile-screen" style="font-size: 40px; margin-bottom: 20px; color: #CCC;"></i><br>
+    為確保隱私與最佳體驗<br>請在 LINE App 中開啟此畫面喔！
+  </div>
+
+  <div id="status">資料同步中，請稍候...</div>
+
+  <div class="container" id="app-container" style="display: none;">
+    
+    <div class="tab-container">
+      <div class="tab-btn active" id="tab-diary" onclick="switchTab('diary')">近期日記</div>
+      <div class="tab-btn" id="tab-report" onclick="switchTab('report')">月度報告</div>
     </div>
-    <div id="app"></div>
+
+    <div class="view-section view-active" id="view-diary">
+      <div id="diary-list"></div>
+    </div>
+
+    <div class="view-section" id="view-report">
+      <div class="dash-header">
+        <h1>本月情緒分析報告</h1>
+        <p>回顧這段時間的內心旅程</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <i class="fa-solid fa-calendar-check"></i>
+          <div class="stat-value" id="stat-days">0</div>
+          <div class="stat-label">本月紀錄天數</div>
+        </div>
+        <div class="stat-box">
+          <i class="fa-solid fa-heart-pulse"></i>
+          <div class="stat-value" id="stat-avg">0.0</div>
+          <div class="stat-label">平均心情分數 (滿分6)</div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">心情趨勢圖</div>
+        <canvas id="trendChart" height="200"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">情緒比例分佈</div>
+        <canvas id="pieChart" height="200"></canvas>
+      </div>
+
+      <div class="ai-message">
+        <div style="font-weight:bold; margin-bottom:10px;"><i class="fa-solid fa-envelope-open-text"></i>給你的話</div>
+        <div id="warm-message">正在分析您的情緒密碼...</div>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    // 【終極防白屏機制】：攔截所有隱藏錯誤並顯示在畫面上
-    window.onerror = function(message, source, lineno, colno, error) {
-      document.getElementById("status").innerHTML = `<span class="error-text">❌ 語法錯誤：<br>${message}<br>行數: ${lineno}</span>`;
-    };
-    window.addEventListener('unhandledrejection', function(event) {
-      document.getElementById("status").innerHTML = `<span class="error-text">❌ 執行錯誤：<br>${event.reason}</span>`;
-    });
-
-    // ==========================================
-    // ⚠️ 必填設定區 (非常重要！)
-    // ==========================================
-    
-    // 1. 填寫你的「心情日記 LIFF ID」 (記得保留雙引號！)
+    // ⚠️ 必填設定
     const LIFF_ID = "2010092951-xlisrv8p"; 
-    
-    // 2. 填寫你的 GAS 網頁應用程式網址 (結尾要是 /exec)
-    // 💡 注意：因為我們已經把網頁移到 GitHub Pages，所以這裡【絕對不能】寫 <?= gasUrl ?>，一定要貼上真實的網址！
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzTARBcKDYLsgk5KN-NMXSYRnTy7o_7JFuymFFy78a6xt_lpzJSz2WnR9ydwCnLX4y8/exec"; 
 
-    // ==========================================
+    let rawData = [];
+    let trendChartInstance = null;
+    let pieChartInstance = null;
 
-    async function main() {
+    async function init() {
       try {
-        document.getElementById("status").innerText = "正在連線至 LINE...";
         await liff.init({ liffId: LIFF_ID });
-        
-        if (liff.isLoggedIn()) {
-          const context = liff.getContext();
-          document.getElementById("status").innerText = "正在同步您的紀錄...";
-          fetchData(context.userId);
-        } else {
-          document.getElementById("status").innerText = "請在 LINE App 中開啟此頁面。";
+        if (!liff.isInClient()) {
+          document.getElementById('status').style.display = 'none';
+          document.getElementById('error-screen').style.display = 'block';
+          return;
         }
-      } catch (err) {
-        document.getElementById("status").innerHTML = `<span class="error-text">❌ LIFF 初始化失敗：<br>${err.message}</span>`;
-      }
+        
+        // 取得網址參數，判斷是否要直接跳到報告頁面
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'report') {
+          switchTab('report');
+        }
+
+        fetchData(liff.getContext().userId);
+      } catch (err) { document.getElementById("status").innerText = "啟動失敗，請稍後再試。"; }
     }
 
     async function fetchData(userId) {
       try {
         const res = await fetch(GAS_URL + "?action=getMoodData&userId=" + userId);
-        if (!res.ok) throw new Error("伺服器沒有正常回應 (狀態碼: " + res.status + ")");
-        
-        const data = await res.json();
+        rawData = await res.json();
         
         document.getElementById("status").style.display = "none";
-        document.getElementById("main-content").style.display = "block";
+        document.getElementById("app-container").style.display = "block";
         
-        const appDiv = document.getElementById("app");
-        if (!data || data.length === 0) {
-          appDiv.innerHTML = "<p style='text-align:center; color:#ccc; margin-top:50px;'>尚無任何紀錄，今晚記得來打卡喔！</p>";
-          return;
-        }
-
-        data.forEach(item => {
-          const card = document.createElement("div");
-          card.className = "card";
-          
-          const diaryHtml = (item.diary && item.diary.trim() !== "") 
-            ? `<div class="diary-content">${item.diary}</div>` 
-            : `<div class="diary-content no-diary">這天沒有留下備註</div>`;
-
-          card.innerHTML = `
-            <div class="card-top">
-              <span class="date">${item.date}</span>
-              <span class="mood-tag">${item.mood}</span>
-            </div>
-            ${diaryHtml}
-          `;
-          appDiv.appendChild(card);
-        });
+        renderDiary();
+        renderDashboard();
       } catch (err) {
-        document.getElementById("status").innerHTML = `<span class="error-text">❌ 讀取資料失敗：<br>請檢查 GAS 網址是否正確且權限為「所有人」。<br>錯誤詳情: ${err.message}</span>`;
+        document.getElementById("status").innerText = "讀取資料失敗，請確認網路狀態。";
       }
     }
 
-    main();
+    function switchTab(tabId) {
+      document.getElementById('tab-diary').classList.remove('active');
+      document.getElementById('tab-report').classList.remove('active');
+      document.getElementById('view-diary').classList.remove('view-active');
+      document.getElementById('view-report').classList.remove('view-active');
+
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+      document.getElementById(`view-${tabId}`).classList.add('view-active');
+    }
+
+    // 渲染日記列表
+    function renderDiary() {
+      const listDiv = document.getElementById("diary-list");
+      if (rawData.length === 0) {
+        listDiv.innerHTML = "<p style='text-align:center; color:#ccc; margin-top:50px;'>尚無紀錄，今晚記得來打卡喔！</p>";
+        return;
+      }
+
+      // 取最近 10 筆顯示在日記頁面
+      const recentData = rawData.slice(0, 10);
+      listDiv.innerHTML = '';
+      
+      recentData.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const diaryHtml = (item.diary && item.diary.trim() !== "") ? `<div class="diary-content">${item.diary}</div>` : `<div class="diary-content no-diary">這天沒有留下備註</div>`;
+        card.innerHTML = `<div class="card-top"><span class="date">${item.date}</span><span class="mood-tag">${item.mood}</span></div>${diaryHtml}`;
+        listDiv.appendChild(card);
+      });
+    }
+
+    // 渲染資料儀表板
+    function renderDashboard() {
+      if (rawData.length === 0) {
+        document.getElementById("warm-message").innerText = "目前還沒有足夠的資料可以分析，請持續記錄幾天，讓我更了解你喔！";
+        return;
+      }
+
+      // 將資料按時間正序排列（舊到新）供圖表使用
+      const chartData = [...rawData].reverse();
+      
+      // 計算統計
+      const days = chartData.length;
+      let totalScore = 0;
+      const scoreCounts = { "超棒":0, "還不錯":0, "平靜":0, "低落":0, "想哭":0, "崩潰":0 };
+      const labels = [];
+      const scores = [];
+
+      chartData.forEach(item => {
+        totalScore += item.score;
+        if(scoreCounts[item.mood] !== undefined) scoreCounts[item.mood]++;
+        labels.push(item.date);
+        scores.push(item.score);
+      });
+
+      const avgScore = (totalScore / days).toFixed(1);
+      document.getElementById("stat-days").innerText = days;
+      document.getElementById("stat-avg").innerText = avgScore;
+
+      // 生成暖心小語
+      let msg = "";
+      if (avgScore >= 4.5) msg = "這段時間的狀態維持得很不錯呢！那些開心的瞬間，都成為了你前進的養分。繼續保持這份對生活的覺察，你已經做得很棒了。";
+      else if (avgScore >= 3.5) msg = "這陣子的情緒像平靜的湖水，雖然沒有太多波瀾，但也代表著一種安穩的力量。每一天平順的度過，就是對自己最好的照顧。";
+      else msg = "這段時間的你，真的辛苦了。可能經歷了一些內心的拉扯，但請記得，願意記錄下這些低谷的你，其實非常勇敢。我會一直在這裡陪著你度過。";
+      document.getElementById("warm-message").innerText = msg;
+
+      // 畫折線圖
+      const ctxTrend = document.getElementById('trendChart').getContext('2d');
+      if(trendChartInstance) trendChartInstance.destroy();
+      trendChartInstance = new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '心情分數',
+            data: scores,
+            borderColor: '#D4B59D',
+            backgroundColor: 'rgba(212, 181, 157, 0.2)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: '#6D5C4F'
+          }]
+        },
+        options: { responsive: true, scales: { y: { min: 1, max: 6, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+      });
+
+      // 畫甜甜圈圖
+      const ctxPie = document.getElementById('pieChart').getContext('2d');
+      if(pieChartInstance) pieChartInstance.destroy();
+      pieChartInstance = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: ["超棒", "還不錯", "平靜", "低落", "想哭", "崩潰"],
+          datasets: [{
+            data: [scoreCounts["超棒"], scoreCounts["還不錯"], scoreCounts["平靜"], scoreCounts["低落"], scoreCounts["想哭"], scoreCounts["崩潰"]],
+            backgroundColor: ['#A8D5BA', '#C1E1C1', '#F4EBE1', '#FCD5CE', '#F4978E', '#D97A7A'],
+            borderWidth: 0
+          }]
+        },
+        options: { responsive: true, cutout: '65%', plugins: { legend: { position: 'right', labels: { font: { size: 12 }, boxWidth: 12 } } } }
+      });
+    }
+
+    init();
   </script>
 </body>
 </html>
