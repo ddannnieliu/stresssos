@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>意見與回饋</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #F9F6F0; color: #4A4A4A; margin: 0; }
+    .container { max-width: 500px; margin: auto; padding-bottom: 40px; }
+    .header { text-align: center; margin: 20px 0 30px 0; }
+    .header h1 { font-size: 20px; color: #6D5C4F; margin: 0; font-weight: bold; }
+    .header p { font-size: 14px; color: #888; margin-top: 5px; }
+    
+    .question { font-size: 16px; margin-bottom: 15px; font-weight: bold; color: #6D5C4F; }
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+    .option-btn { 
+      background: white; border: 1px solid #EEE; padding: 15px 10px; border-radius: 12px; 
+      text-align: center; font-size: 14px; cursor: pointer; transition: all 0.2s; color: #666;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .option-btn i { font-size: 18px; color: #D4B59D; }
+    .option-btn.selected { background: #E6C9B3; color: white; border-color: #E6C9B3; font-weight: bold; }
+    .option-btn.selected i { color: white; }
+
+    textarea { 
+      width: 100%; padding: 15px; border: 1px solid #DDD; border-radius: 12px; font-size: 15px; 
+      background: white; color: #4A4A4A; box-sizing: border-box; resize: none; line-height: 1.5;
+      margin-bottom: 30px;
+    }
+    textarea:focus { outline: none; border-color: #E6C9B3; }
+
+    .submit-btn { 
+      width: 100%; padding: 16px; background: #E6C9B3; color: #6D5C4F; border: none; 
+      border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; 
+    }
+    .submit-btn:disabled { background: #CCC; color: #888; cursor: not-allowed; }
+
+    #error-screen { display: none; text-align: center; margin-top: 40vh; color: #8C8C8C; font-size: 16px; line-height: 1.6; }
+    #loading-screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 50vh; }
+    .loader { width: 50px; height: 50px; border: 5px solid #F4EBE1; border-top-color: #D4B59D; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div id="error-screen">
+    <i class="fa-solid fa-mobile-screen" style="font-size: 40px; margin-bottom: 20px; color: #CCC;"></i><br>
+    為確保隱私與最佳體驗<br>請在 LINE App 中開啟此畫面喔！
+  </div>
+
+  <div class="container" id="app-container">
+    
+    <div id="form-content">
+      <div class="header">
+        <h1>意見與回饋</h1>
+        <p>謝謝你願意與我們分享你的想法</p>
+      </div>
+
+      <div class="question">回饋類別</div>
+      <div class="options" id="category-group">
+        <div class="option-btn" data-val="系統錯誤"><i class="fa-solid fa-bug"></i>系統錯誤</div>
+        <div class="option-btn" data-val="功能建議"><i class="fa-solid fa-lightbulb"></i>功能建議</div>
+        <div class="option-btn" data-val="內容感受"><i class="fa-solid fa-heart"></i>內容感受</div>
+        <div class="option-btn" data-val="其他問題"><i class="fa-solid fa-circle-question"></i>其他問題</div>
+      </div>
+
+      <div class="question">詳細說明遇到的困難或想法</div>
+      <textarea id="feedback-text" rows="6" placeholder="請描述詳細情況，我們會認真閱讀每一份回饋..."></textarea>
+
+      <button class="submit-btn" id="submitBtn" onclick="submitFeedback()">提交回饋</button>
+    </div>
+
+    <div id="loading-screen">
+      <div class="loader"></div>
+      <div style="color: #6D5C4F; font-size: 15px;">正在為您傳送回饋...</div>
+    </div>
+
+  </div>
+
+  <script>
+    let selectedCategory = "";
+    
+    // ⚠️ 必填設定區
+    const LIFF_ID = "2010092951-vIaEYb6W"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzTARBcKDYLsgk5KN-NMXSYRnTy7o_7JFuymFFy78a6xt_lpzJSz2WnR9ydwCnLX4y8/exec"; 
+
+    async function init() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isInClient()) {
+          document.getElementById('app-container').style.display = 'none';
+          document.getElementById('error-screen').style.display = 'block';
+        }
+      } catch (e) { console.error("初始化失敗"); }
+    }
+    init();
+
+    // 處理分類選擇
+    document.querySelectorAll('.option-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('#category-group .option-btn').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+        selectedCategory = this.getAttribute('data-val');
+      });
+    });
+
+    async function submitFeedback() {
+      const text = document.getElementById('feedback-text').value.trim();
+      if (!selectedCategory) { alert("請先選擇回饋類別喔。"); return; }
+      if (!text) { alert("請填寫說明內容，讓我們更清楚你的狀況。"); return; }
+
+      document.getElementById('form-content').style.display = 'none';
+      document.getElementById('loading-screen').style.display = 'flex';
+
+      const payload = {
+        action: 'submitFeedback',
+        userId: liff.getContext().userId,
+        category: selectedCategory,
+        content: text
+      };
+
+      try {
+        await fetch(GAS_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify(payload)
+        });
+        setTimeout(() => { liff.closeWindow(); }, 1000);
+      } catch (e) {
+        alert("網路好像有點不穩，請再試一次。");
+        document.getElementById('form-content').style.display = 'block';
+        document.getElementById('loading-screen').style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
