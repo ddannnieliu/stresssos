@@ -66,7 +66,7 @@
 
     .ai-message { background: linear-gradient(135deg, #FFF, #F4EBE1); padding: 20px; border-radius: 15px; border: 1px solid #E6C9B3; color: #6D5C4F; line-height: 1.6; font-size: 15px; }
 
-    #status { text-align: center; margin-top: 40vh; color: #8c8c8c; font-size: 15px; }
+    #status { text-align: center; margin-top: 30vh; color: #8c8c8c; font-size: 15px; line-height: 1.6; }
     #error-screen { display: none; text-align: center; margin-top: 40vh; color: #8C8C8C; font-size: 16px; line-height: 1.6; }
   </style>
 </head>
@@ -77,7 +77,7 @@
     為確保隱私與最佳體驗<br>請在 LINE App 中開啟此畫面喔！
   </div>
 
-  <div id="status">資料同步中，請稍候...</div>
+  <div id="status">資料同步中，請稍候...⏳</div>
 
   <div class="container" id="app-container" style="display: none;">
     
@@ -98,7 +98,7 @@
       <div id="mode-calendar" style="display: none;">
         <div class="cal-header">
           <button onclick="changeCalMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-          <div class="cal-month-label" id="cal-month-label">2026年5月</div>
+          <div class="cal-month-label" id="cal-month-label">載入中...</div>
           <button onclick="changeCalMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
         <div class="cal-grid" id="cal-grid"></div>
@@ -148,11 +148,13 @@
   </div>
 
   <script>
-    // ⚠️ 必填設定
+    // ==========================================
+    // ⚠️ 必填設定區 (請務必替換為您真實的資料)
+    // ==========================================
     const LIFF_ID = "2010092951-xlisrv8p"; 
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzTARBcKDYLsgk5KN-NMXSYRnTy7o_7JFuymFFy78a6xt_lpzJSz2WnR9ydwCnLX4y8/exec"; 
 
-    // 情緒 Emoji 映射表
+    // 情緒 Emoji 映射表 (保留給月曆跟列表使用)
     const moodEmoji = { "超棒":"😄", "還不錯":"🙂", "平靜":"😐", "低落":"😞", "想哭":"😭", "崩潰":"😫" };
 
     let rawData = [];
@@ -173,13 +175,19 @@
         if (urlParams.get('tab') === 'report') switchTab('report');
 
         fetchData(liff.getContext().userId);
-      } catch (err) { document.getElementById("status").innerText = "啟動失敗，請稍後再試。"; }
+      } catch (err) { 
+        document.getElementById("status").innerHTML = `<span style="color:#D97A7A; font-weight:bold;">❌ LIFF 初始化失敗，請稍後再試。</span>`;
+      }
     }
 
+    // 🌟 升級版 fetchData：自帶錯誤捕捉與提示功能
     async function fetchData(userId) {
       try {
-        const res = await fetch(GAS_URL + "?action=getMoodData&userId=" + userId);
-        rawData = await res.json(); // 格式為 {date: 'YYYY-MM-DD', score: 5, mood: '還不錯', diary: '...'}
+        const res = await fetch(GAS_URL + "?action=getMoodData&userId=" + userId, { redirect: 'follow' });
+        
+        if (!res.ok) throw new Error("伺服器沒有回應 (代碼: " + res.status + ")");
+        
+        rawData = await res.json(); 
         
         document.getElementById("status").style.display = "none";
         document.getElementById("app-container").style.display = "block";
@@ -188,204 +196,6 @@
         setDiaryMode('list');
         renderDashboard();
       } catch (err) {
-        document.getElementById("status").innerText = "讀取資料失敗，請確認網路狀態。";
-      }
-    }
-
-    // --- 頁籤與模式切換 ---
-    function switchTab(tabId) {
-      document.getElementById('tab-diary').classList.remove('active');
-      document.getElementById('tab-report').classList.remove('active');
-      document.getElementById('view-diary').classList.remove('view-active');
-      document.getElementById('view-report').classList.remove('view-active');
-
-      document.getElementById(`tab-${tabId}`).classList.add('active');
-      document.getElementById(`view-${tabId}`).classList.add('view-active');
-    }
-
-    function setDiaryMode(mode) {
-      document.getElementById('btn-list').classList.remove('active');
-      document.getElementById('btn-cal').classList.remove('active');
-      document.getElementById('mode-list').style.display = 'none';
-      document.getElementById('mode-calendar').style.display = 'none';
-
-      document.getElementById(`btn-${mode === 'list' ? 'list' : 'cal'}`).classList.add('active');
-      document.getElementById(`mode-${mode}`).style.display = 'block';
-
-      if (mode === 'list') renderDiaryList();
-      else renderCalendar();
-    }
-
-    // --- 視圖 1: 列表模式 ---
-    function renderDiaryList() {
-      const listDiv = document.getElementById("mode-list");
-      if (rawData.length === 0) {
-        listDiv.innerHTML = "<p style='text-align:center; color:#ccc; margin-top:50px;'>尚無紀錄，今晚記得來打卡喔！</p>";
-        return;
-      }
-
-      listDiv.innerHTML = '';
-      // 取最近 15 筆顯示
-      const recentData = rawData.slice(0, 15);
-      
-      recentData.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "card";
-        
-        // 將 YYYY-MM-DD 轉為 MM/DD
-        const dateParts = item.date.split('-');
-        const shortDate = `${dateParts[1]}/${dateParts[2]}`;
-        const emoji = moodEmoji[item.mood] || "";
-
-        const diaryHtml = (item.diary && item.diary.trim() !== "") ? `<div class="diary-content">${item.diary}</div>` : `<div class="diary-content no-diary">這天沒有留下備註</div>`;
-        card.innerHTML = `<div class="card-top"><span class="date">${shortDate}</span><span class="mood-tag">${emoji} ${item.mood}</span></div>${diaryHtml}`;
-        listDiv.appendChild(card);
-      });
-    }
-
-    // --- 視圖 1: 月曆模式 ---
-    function changeCalMonth(offset) {
-      currentCalDate.setMonth(currentCalDate.getMonth() + offset);
-      document.getElementById('cal-detail-card').style.display = 'none';
-      renderCalendar();
-    }
-
-    function renderCalendar() {
-      const y = currentCalDate.getFullYear();
-      const m = currentCalDate.getMonth();
-      document.getElementById('cal-month-label').innerText = `${y}年${m + 1}月`;
-      
-      const firstDay = new Date(y, m, 1).getDay();
-      const daysInMonth = new Date(y, m + 1, 0).getDate();
-      
-      const grid = document.getElementById('cal-grid');
-      let html = '<div class="cal-day-header">日</div><div class="cal-day-header">一</div><div class="cal-day-header">二</div><div class="cal-day-header">三</div><div class="cal-day-header">四</div><div class="cal-day-header">五</div><div class="cal-day-header">六</div>';
-      
-      for (let i = 0; i < firstDay; i++) { html += '<div class="cal-cell empty"></div>'; }
-      
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        // 找尋當天紀錄 (如果有重複打卡，抓最新的一筆)
-        const record = rawData.find(r => r.date === dateStr);
-        
-        if (record) {
-          const emoji = moodEmoji[record.mood] || "";
-          html += `<div class="cal-cell has-record" id="cell-${dateStr}" onclick="showCalDetail('${dateStr}')">
-                     <div class="cal-date-num">${d}</div>
-                     <div class="cal-emoji">${emoji}</div>
-                   </div>`;
-        } else {
-          html += `<div class="cal-cell"><div class="cal-date-num" style="color:#CCC;">${d}</div></div>`;
-        }
-      }
-      grid.innerHTML = html;
-    }
-
-    function showCalDetail(dateStr) {
-      // 移除所有選中狀態
-      document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
-      document.getElementById(`cell-${dateStr}`).classList.add('selected');
-
-      const record = rawData.find(r => r.date === dateStr);
-      const detailCard = document.getElementById('cal-detail-card');
-      
-      if (record) {
-        const emoji = moodEmoji[record.mood] || "";
-        const diaryHtml = (record.diary && record.diary.trim() !== "") ? `<div class="diary-content">${record.diary}</div>` : `<div class="diary-content no-diary">這天沒有留下備註</div>`;
-        detailCard.innerHTML = `
-          <div class="card" style="margin-bottom:0; border-left-color:#6D5C4F;">
-            <div class="card-top">
-              <span class="date">${dateStr.replace(/-/g, '/')}</span>
-              <span class="mood-tag">${emoji} ${record.mood}</span>
-            </div>
-            ${diaryHtml}
-          </div>`;
-        detailCard.style.display = 'block';
-      }
-    }
-
-    // --- 視圖 2: 儀表板與月份篩選 ---
-    function populateMonthSelector() {
-      const select = document.getElementById('report-month-select');
-      const months = new Set();
-      
-      rawData.forEach(r => months.add(r.date.substring(0, 7))); // 提取 YYYY-MM
-      const sortedMonths = Array.from(months).sort().reverse();
-      
-      select.innerHTML = '';
-      if (sortedMonths.length === 0) {
-        const today = new Date();
-        select.innerHTML = `<option value="">${today.getFullYear()}年${today.getMonth()+1}月</option>`;
-        return;
-      }
-
-      sortedMonths.forEach(ym => {
-        const [year, month] = ym.split('-');
-        select.innerHTML += `<option value="${ym}">${year}年${parseInt(month)}月</option>`;
-      });
-    }
-
-    function renderDashboard() {
-      if (rawData.length === 0) {
-        document.getElementById("warm-message").innerText = "目前還沒有足夠的資料可以分析，請持續記錄幾天，讓我更了解你喔！";
-        return;
-      }
-
-      const selectedYM = document.getElementById('report-month-select').value;
-      // 篩選出該月份的資料，並反轉成正序 (舊 -> 新) 畫圖
-      const chartData = rawData.filter(r => r.date.startsWith(selectedYM)).reverse();
-      
-      const days = chartData.length;
-      if (days === 0) {
-        document.getElementById("stat-days").innerText = 0;
-        document.getElementById("stat-avg").innerText = "-";
-        if(trendChartInstance) trendChartInstance.destroy();
-        if(pieChartInstance) pieChartInstance.destroy();
-        document.getElementById("warm-message").innerText = "這個月還沒有留下紀錄喔。";
-        return;
-      }
-
-      let totalScore = 0;
-      const scoreCounts = { "超棒":0, "還不錯":0, "平靜":0, "低落":0, "想哭":0, "崩潰":0 };
-      const labels = [];
-      const scores = [];
-
-      chartData.forEach(item => {
-        totalScore += item.score;
-        if(scoreCounts[item.mood] !== undefined) scoreCounts[item.mood]++;
-        // 取出 DD 作為 X 軸標籤
-        labels.push(item.date.split('-')[2]);
-        scores.push(item.score);
-      });
-
-      const avgScore = (totalScore / days).toFixed(1);
-      document.getElementById("stat-days").innerText = days;
-      document.getElementById("stat-avg").innerText = avgScore;
-
-      // 產生暖心建議
-      let msg = "";
-      if (avgScore >= 4.5) msg = "這段時間的狀態維持得很不錯呢！那些開心的瞬間，都成為了你前進的養分。繼續保持這份對生活的覺察，你已經做得很棒了。";
-      else if (avgScore >= 3.5) msg = "這陣子的情緒像平靜的湖水，雖然沒有太多波瀾，但也代表著一種安穩的力量。每一天平順的度過，就是對自己最好的照顧。";
-      else msg = "這段時間的你，真的辛苦了。可能經歷了一些內心的拉扯，但請記得，願意記錄下這些低谷的你，其實非常勇敢。我會一直在這裡陪著你度過。";
-      document.getElementById("warm-message").innerText = msg;
-
-      // 繪製圖表
-      const ctxTrend = document.getElementById('trendChart').getContext('2d');
-      if(trendChartInstance) trendChartInstance.destroy();
-      trendChartInstance = new Chart(ctxTrend, {
-        type: 'line',
-        data: { labels: labels, datasets: [{ label: '心情分數', data: scores, borderColor: '#D4B59D', backgroundColor: 'rgba(212, 181, 157, 0.2)', borderWidth: 2, tension: 0.3, fill: true, pointBackgroundColor: '#6D5C4F' }] },
-        options: { responsive: true, scales: { y: { min: 1, max: 6, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
-      });
-
-      const ctxPie = document.getElementById('pieChart').getContext('2d');
-      if(pieChartInstance) pieChartInstance.destroy();
-      pieChartInstance = new Chart(ctxPie, {
-        type: 'doughnut',
-        data: { labels: ["超棒", "還不錯", "平靜", "低落", "想哭", "崩潰"], datasets: [{ data: [scoreCounts["超棒"], scoreCounts["還不錯"], scoreCounts["平靜"], scoreCounts["低落"], scoreCounts["想哭"], scoreCounts["崩潰"]], backgroundColor: ['#A8D5BA', '#C1E1C1', '#F4EBE1', '#FCD5CE', '#F4978E', '#D97A7A'], borderWidth: 0 }] },
-        options: { responsive: true, cutout: '65%', plugins: { legend: { position: 'right', labels: { font: { size: 12 }, boxWidth: 12 } } } }
-      });
-    }
-  </script>
-</body>
-</html>
+        document.getElementById("status").innerHTML = `
+          <span style="color:#D97A7A; font-weight:bold; font-size:16px;">❌ 讀取資料失敗</span><br><br>
+          <span style="color
